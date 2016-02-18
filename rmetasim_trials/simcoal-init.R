@@ -66,9 +66,10 @@ simcoal.init <- function(splittime=120000,
                                      arlms=nucFile,
                                      seqsitemut=cpmut/cpseq,
                                      msmut=nmut)
-#        unlink(cp.par.file)
-#        unlink(nuc.par.file)
-
+        unlink(cp.par.file)
+        unlink(nuc.par.file)
+        unlink(cpFileBase,recursive=T)
+        unlink(nucFileBase,recursive=T)
         rlnew
     }
                          
