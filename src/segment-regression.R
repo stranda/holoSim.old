@@ -17,7 +17,7 @@ segmentGLM <- function(X,Y)
         fit1 <- glm(Y~X)
         fit1.ll <- logLik(fit1)
 
-        opt <- optimize(f=segment,X=X,Y=Y,lower=min(X),upper=max(X),maximum=T)
+        suppressWarnings(opt <- optimize(f=segment,X=X,Y=Y,lower=min(X),upper=max(X),maximum=T))
         c(breakpoint=opt$maximum,diffLL=opt$objective-fit1.ll)
     }
 
