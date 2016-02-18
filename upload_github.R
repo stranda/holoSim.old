@@ -17,8 +17,8 @@ simul_out<-tmp; subsample=F; num_samp<-24; num_loci<-10
 
 analysis.func = function(simul_out,n_smp,...){
 
-pdf(file="graphics.pdf")
-par(mfrow=c(3,3))
+pdf(file="graphics.pdf",width=11,height=5)
+par(mfrow=c(2,4))
 
 	#for now, pull out the microsatellite dataset
 	gen_ind_obj<-simul_out[[1]]
@@ -47,7 +47,7 @@ par(mfrow=c(3,3))
 	all_on_dist<-lm(dist_origin~sum_stats_gi$pop.n.all)
 	abline(all_on_dist)
 	p_val_all<-summary(all_on_dist)[4]$coefficients[8]
-	r_sq_all<-summary(all_on_dist)[8]
+	r_sq_all<-as.numeric(summary(all_on_dist)[8])
 	alleles_data<-c(as.numeric(coef(all_on_dist)),p_val_all,r_sq_all,var(sum_stats_gi$pop.n.all[1:10]),var(sum_stats_gi$pop.n.all[50:60]),var(sum_stats_gi$pop.n.all[90:100]))
 	 names(alleles_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
 
@@ -62,7 +62,7 @@ par(mfrow=c(3,3))
 	 het_on_dist<-lm(dist_origin~het_by_pop)
 	 abline(het_on_dist)
 	 p_val_het<-summary(het_on_dist)[4]$coefficients[8]
-	 r_sq_het<-summary(het_on_dist)[8]
+	 r_sq_het<-as.numeric(summary(het_on_dist)[8])
 	 het_data<-c(as.numeric(coef(het_on_dist)),p_val_het,r_sq_het,mean(het_by_pop[1:10]),mean(het_by_pop[30:40]),mean(het_by_pop[90:100]))
 	 names(het_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
@@ -95,5 +95,7 @@ par(mfrow=c(3,3))
 	fst_data<-c(as.numeric(coef(all_on_dist)),p_val_fst,r_sq_fst,mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100]))
 	names(fst_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
 	
-	list(alleles_data,het_data,fst_data)
+	dev.off()
+	list("ALLELE STATS" = alleles_data, "HETEROZYGOSITY STATS" = het_data, "FST STATS" = fst_data)
+	
 }
