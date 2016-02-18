@@ -77,6 +77,7 @@ par(mfrow=c(2,4))
 #	fst_per_pop_gi<-colMeans(do.call(cbind,lapply(FSTpop, function(x) x[,2])))
 	plot(fst_per_pop_gi,rows_pops)
 	plot(log(fst_per_pop_gi),log(dist_origin),pch='.')
+	pop.num<-1:100
 	text((log(fst_per_pop_gi)),log(dist_origin),labels=as.character(pop.num))
 	#color code populations by row!
 	IBD<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
