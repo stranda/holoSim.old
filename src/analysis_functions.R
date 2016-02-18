@@ -95,7 +95,7 @@ par(mfrow=c(2,4))
 	glob_fst_by_loc<-Fst(gi_sub_pegas)[,2]
 	
 	#Variance in FST
-	var_fst_pop<-as.vector(as.numeric(lapply(fst_per_pop_gi, function(x) sd(x[,2]))))
+	var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
 	plot(dist_origin,var_fst_pop)
 	summary(lm(var_fst_pop~dist_origin))
 	abline(lm(var_fst_pop~dist_origin))
