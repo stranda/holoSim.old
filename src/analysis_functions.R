@@ -6,17 +6,19 @@
 library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG")
 
 #gi
-load("examp-genind.rda")
+#load("examp-genind.rda")
 #tmp
-load("rep.rda")
+#load("rep.rda")
 #crd
-load("popcoord.rda")
+#load("popcoord.rda")
 
 #for now HARD CODE..
-simul_out<-tmp; subsample=F; num_samp<-24; num_loci<-10
+subsample=F; num_samp<-24; num_loci<-10
 
 analysis.func = function(simul_out,n_smp,...){
 
+crd <- landscape.popcoord(simul_out[[4]])
+    
 pdf(file="graphics.pdf",width=11,height=5)
 par(mfrow=c(2,4))
 
