@@ -3,7 +3,10 @@
 #all markers have same mutation rate and starting allele freq
 
 #load packages
-library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG")
+library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG"); library("PopGenReport")
+
+source("make-landscape.R")
+source("segment-regression.R")  
 
 #gi
 #load("examp-genind.rda")
@@ -13,19 +16,15 @@ library("ade4"); library("apex"); library("adegenet"); library("hierfstat");libr
 #load("popcoord.rda")
 
 #for now HARD CODE..
-subsample=F; num_samp<-24; num_loci<-10
-
-analysis.func = function(simul_out,n_smp,...){
-
-crd <- landscape.popcoord(simul_out[[4]])
-    
+analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,...){
+ 
 pdf(file="graphics.pdf",width=11,height=5)
 par(mfrow=c(2,4))
 
 	#for now, pull out the microsatellite dataset
 	gen_ind_obj<-simul_out[[1]]
 	gi<-gen_ind_obj
-
+	
 	#number individuals to sample 
 	if (!exists("n_smp")) num_samp<-24
 	#subset to num_samp individuals
@@ -35,11 +34,15 @@ par(mfrow=c(2,4))
 		gi_sub<-repool(gi_sub)
 	} else gi_sub<-gi
 	
-	#calculate geographic distance for our simulations
-	dist_origin<-as.matrix(dist(crd[,2:3],upper=T,diag=T))[,1]
-	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude
-	rows_pops<-sort(rep(1:10,10))
-
+	#calculate distances among populations- first get rows, columns (coordinates)
+	crd<-landscape.popcoord(simul_out[[4]])
+	#calculate all pairwise geographic distances
+	pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
+	#calculate geographic distance FROM ORIGIN (1,1) for our simulations
+	dist_origin<-pw_geog_dist[,1]
+	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude sort(rep(1:10,10))
+	rows_pops<-crd[,2] 
+	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
 	sum_stats_gi<-summary(gi_sub)
 	#'x' graph
@@ -68,30 +71,31 @@ par(mfrow=c(2,4))
 	 het_data<-c(as.numeric(coef(het_on_dist)),p_val_het,r_sq_het,mean(het_by_pop[1:10]),mean(het_by_pop[30:40]),mean(het_by_pop[90:100]))
 	 names(het_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
-	#FST via hierfstat- per population FST, locus by locus?
-	#using code from skelesim
-	gi_sub_pegas<-genind2loci(gi_sub)
-#	FSTpop<-lapply(levels(gi_sub_pegas$population), function(x){
-#			fst <- Fst(gi_sub_pegas[gi_sub_pegas$population == x,], pop=gi_sub_pegas$population)
-#		  })
-#	fst_per_pop_gi<-colMeans(do.call(cbind,lapply(FSTpop, function(x) x[,2])))
+	#FAST FST
+	all_pw_FST<-pairwise.fstb(gi_sub)
+	fst_per_pop_gi<-colMeans(all_pw_FST)
+	diag(all_pw_FST)<-NA
 	plot(fst_per_pop_gi,rows_pops)
-	plot(log(fst_per_pop_gi),log(dist_origin),pch='.')
-	pop.num<-1:100
-	text((log(fst_per_pop_gi)),log(dist_origin),labels=as.character(pop.num))
 	#color code populations by row!
-	IBD<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
-	plot((log(dist_origin)),log(fst_per_pop_gi),pch='.')
+	#note these are NOT isolation by distance, this is per population FST and distance from origin
+	fst_on_dist<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
+	plot((log(dist_origin)),log(fst_per_pop_gi),pch='')
+	pop.num<-1:100
 	text((log(dist_origin)),log(fst_per_pop_gi),labels=as.character(pop.num))
-	abline(IBD)
+	#abline(fst_on_dist)
+	#resid(fst_on_dist)
+	
+	#isolation by distance (IBD)	
+	IBD<-lm(c(all_pw_FST)~c(log(pw_geog_dist+0.001)))
 	p_val_fst<-summary(IBD)[4]$coefficients[8]
-	r_sq_fst<-as.numeric(summary(IBD)[8])
-	#resid(IBD)
+	r_sq_fst<-as.numeric(summary(fst_on_dist)[8])
+	plot(pw_geog_dist, all_pw_FST)
 	
 	#broken stick
-	two_reg_stats<-segmentGLM(log(dist_origin+0.001),log(fst_per_pop_gi))
+	two_reg_stats<-segmentGLM(c(all_pw_FST),c(log(pw_geog_dist+0.001)))
 	
 	#global FST fitting distribution
+	gi_sub_pegas<-genind2loci(gi_sub)
 	glob_fst_by_loc<-Fst(gi_sub_pegas)[,2]
 	
 	#Variance in FST
