@@ -16,7 +16,7 @@ library("ade4"); library("apex"); library("adegenet"); library("hierfstat");libr
 #load("popcoord.rda")
 
 #for now HARD CODE..
-analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,...){
+analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=T,...){
  
 pdf(file="graphics.pdf",width=11,height=5)
 par(mfrow=c(2,4))
@@ -46,11 +46,11 @@ par(mfrow=c(2,4))
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
 	sum_stats_gi<-summary(gi_sub)
 	#'x' graph
-	plot(sum_stats_gi$pop.n.all,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
+	if (doplot==T) plot(sum_stats_gi$pop.n.all,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
 	#linear graph
-	plot(sum_stats_gi$pop.n.all,dist_origin,ylab="distance from origin",xlab="number of alleles per population")
+	if (doplot==T) plot(sum_stats_gi$pop.n.all,dist_origin,ylab="distance from origin",xlab="number of alleles per population")
 	all_on_dist<-lm(dist_origin~sum_stats_gi$pop.n.all)
-	abline(all_on_dist)
+	if (doplot==T) abline(all_on_dist)
 	p_val_all<-summary(all_on_dist)[4]$coefficients[8]
 	r_sq_all<-as.numeric(summary(all_on_dist)[8])
 	alleles_data<-c(as.numeric(coef(all_on_dist)),p_val_all,r_sq_all,var(sum_stats_gi$pop.n.all[1:10]),var(sum_stats_gi$pop.n.all[50:60]),var(sum_stats_gi$pop.n.all[90:100]))
@@ -61,11 +61,11 @@ par(mfrow=c(2,4))
 	 het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
 	 #lapply(temp, function(x) var(x$Hexp))
 	 #'x' graph
-	 plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
+	 if (doplot==T) plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
 	 #linear graph
-	 plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population")
+	 if (doplot==T) plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population")
 	 het_on_dist<-lm(dist_origin~het_by_pop)
-	 abline(het_on_dist)
+	 if (doplot==T) abline(het_on_dist)
 	 p_val_het<-summary(het_on_dist)[4]$coefficients[8]
 	 r_sq_het<-as.numeric(summary(het_on_dist)[8])
 	 het_data<-c(as.numeric(coef(het_on_dist)),p_val_het,r_sq_het,mean(het_by_pop[1:10]),mean(het_by_pop[30:40]),mean(het_by_pop[90:100]))
@@ -75,13 +75,13 @@ par(mfrow=c(2,4))
 	all_pw_FST<-pairwise.fstb(gi_sub)
 	fst_per_pop_gi<-colMeans(all_pw_FST)
 	diag(all_pw_FST)<-NA
-	plot(fst_per_pop_gi,rows_pops)
+	if (doplot==T) plot(fst_per_pop_gi,rows_pops)
 	#color code populations by row!
 	#note these are NOT isolation by distance, this is per population FST and distance from origin
 	fst_on_dist<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
-	plot((log(dist_origin)),log(fst_per_pop_gi),pch='')
+	if (doplot==T) plot((log(dist_origin)),log(fst_per_pop_gi),pch='')
 	pop.num<-1:100
-	text((log(dist_origin)),log(fst_per_pop_gi),labels=as.character(pop.num))
+	if (doplot==T) text((log(dist_origin)),log(fst_per_pop_gi),labels=as.character(pop.num))
 	#abline(fst_on_dist)
 	#resid(fst_on_dist)
 	
@@ -90,7 +90,7 @@ par(mfrow=c(2,4))
 	IBD<-lm(c(all_pw_FST)~c(log(pw_geog_dist+0.001)))
 	p_val_fst<-summary(IBD)[4]$coefficients[8]
 	r_sq_fst<-as.numeric(summary(IBD)[8])
-	plot(pw_geog_dist, all_pw_FST)
+	if (doplot==T) plot(pw_geog_dist, all_pw_FST)
 	
 	#broken stick
 	two_reg_stats<-segmentGLM(c(pw_geog_dist),log(c(all_pw_FST)))
@@ -108,7 +108,7 @@ par(mfrow=c(2,4))
 	#summary(lm(var_fst_pop~dist_origin)); abline(lm(var_fst_pop~dist_origin))
 	#oddly, variance decreases with distance from origin- oops!
 	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
-	plot(c(pw_geog_dist),var_pw_fst)
+	if (doplot==T) plot(c(pw_geog_dist),var_pw_fst)
 	var_inc<-lm(var_pw_fst~c(pw_geog_dist))
 	#p_val_fst_var<-summary(var_inc)[4]$coefficients[8]
 	#r_sq_fst_var<-as.numeric(summary(var_inc)[8])
