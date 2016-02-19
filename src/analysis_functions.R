@@ -5,8 +5,8 @@
 #load packages
 library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG"); library("PopGenReport")
 
-source("make-landscape.R")
-source("segment-regression.R")  
+#source("make-landscape.R")
+#source("segment-regression.R")  
 
 #gi
 #load("examp-genind.rda")
@@ -86,27 +86,35 @@ par(mfrow=c(2,4))
 	#resid(fst_on_dist)
 	
 	#isolation by distance (IBD)	
+	diag(pw_geog_dist)<-NA
 	IBD<-lm(c(all_pw_FST)~c(log(pw_geog_dist+0.001)))
 	p_val_fst<-summary(IBD)[4]$coefficients[8]
-	r_sq_fst<-as.numeric(summary(fst_on_dist)[8])
+	r_sq_fst<-as.numeric(summary(IBD)[8])
 	plot(pw_geog_dist, all_pw_FST)
 	
 	#broken stick
-	two_reg_stats<-segmentGLM(c(all_pw_FST),c(log(pw_geog_dist+0.001)))
+	two_reg_stats<-segmentGLM(c(pw_geog_dist),log(c(all_pw_FST)))
 	
 	#global FST fitting distribution
 	gi_sub_pegas<-genind2loci(gi_sub)
 	glob_fst_by_loc<-Fst(gi_sub_pegas)[,2]
 	
 	#Variance in FST
-	var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
-	plot(dist_origin,var_fst_pop)
-	summary(lm(var_fst_pop~dist_origin))
-	abline(lm(var_fst_pop~dist_origin))
-	#oddly, variance decreases with distance from origin
+	all_pw_by_loc<-lapply(seploc(gi_sub), function(x) pairwise.fstb(x))
+	concat_pw<-do.call(cbind,lapply(all_pw_by_loc, c))
+	var_pw_fst<-apply(concat_pw,1,var)
+	#var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
+	#plot(dist_origin,var_fst_pop)
+	#summary(lm(var_fst_pop~dist_origin)); abline(lm(var_fst_pop~dist_origin))
+	#oddly, variance decreases with distance from origin- oops!
+	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
+	plot(c(pw_geog_dist),var_pw_fst)
+	var_inc<-lm(var_pw_fst~c(pw_geog_dist))
+	#p_val_fst_var<-summary(var_inc)[4]$coefficients[8]
+	#r_sq_fst_var<-as.numeric(summary(var_inc)[8])
 	
-	fst_data<-c(as.numeric(coef(all_on_dist)),p_val_fst,r_sq_fst,mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100]))
-	names(fst_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
+	fst_data<-c(as.numeric(coef(all_on_dist)),p_val_fst,r_sq_fst)
+	names(fst_data)<-c("intercept","slope","pval","rsq")
 	
 	dev.off()
 	list("ALLELE STATS" = alleles_data, "HETEROZYGOSITY STATS" = het_data, "FST STATS" = fst_data, "TWO REG MODEL" = two_reg_stats, "FIT DISTRIBUTION WEIBULL" = fit.weibull(glob_fst_by_loc), "FIT DISTRIBUTION GAMMA" = fit.gamma(glob_fst_by_loc))
