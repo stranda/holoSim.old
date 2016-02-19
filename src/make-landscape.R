@@ -1,5 +1,3 @@
-require(rmetasim)
-
 #assuming a square landscape, what are the row,col coords for each pop
 landscape.popcoord <- function(rland)
     {

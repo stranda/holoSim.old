@@ -104,5 +104,5 @@ simcoal <-
         cat("MICROSAT",1,0.2,usat.mut.rate,0,0,"\n",file=par.file,append=T)
                                         #AES changed to simcoal2 3/30/09
 ###set up for unique reps
-    tmpres=system(paste0(executable," -n 1 -S -i ",par.file),T)
+    tmpres=system(paste0(executable," -n 1  -i ",par.file),T)
 }

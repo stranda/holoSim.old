@@ -20,12 +20,15 @@ run.rep <- function(refugia=c(1,2),
                     h=100,
                     k=rep(1000,h),
                     e=rep(0,h),
-                    shortshape=1,shortscale=1,longmean=3,mix=0,
+                    shortshape=1,
+                    shortscale=1,
+                    longmean=3,
+                    mix=0,
                     executable="fsc251",
-                    glac.front = 2,
                     glac.retreat.per.epoch=1,
                     decay.dist=3,
-                    marginal.decrease=0.8,
+                    glac.front = sqrt(h)+decay.dist, #default is no glacier effect
+                    marginal.decrease=1,             #default is no edge effect
                     plotland=F
                     )
     {
