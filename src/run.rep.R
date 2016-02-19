@@ -102,7 +102,7 @@ run.rep <- function(refugia=c(1,2),
 #################
 
 if (plotland){require(lattice); plots <- vector("list",epochs)}
-        
+        print("runnning simulation")
         for (g in 1:epochs)
             {
                 print(g)
@@ -154,5 +154,7 @@ if (plotland){require(lattice); plots <- vector("list",epochs)}
             simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland,plots=plots)
         else
             simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland)
-        analysis_function
+        print("running analysis.func")
+        save(file="current-simrep.rda",simres)
+        analysis.func(simres,doplots=F)
     }
