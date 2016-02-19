@@ -13,7 +13,7 @@ run.rep <- function(refugia=c(1,2),
                     gens.per.epoch=50,
                     epochs=10,
                     splittime=120000,
-                    cpmut=10e-08,
+                    cpmut=10e-06,
                     cpseq=500,
                     nloc=10,
                     nmut=10e-4,
@@ -151,7 +151,8 @@ if (plotland){require(lattice); plots <- vector("list",epochs)}
         names(aln@ind.info) <- c("state","ID","MatID","PatID")
         #return gi, gi for cp, alignmnent for cp and the sampled landscape
         if (plotland)
-            list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland,plots=plots)
+            simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland,plots=plots)
         else
-            list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland)
+            simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland)
+        analysis_function
     }
