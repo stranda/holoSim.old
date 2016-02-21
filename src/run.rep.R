@@ -169,7 +169,7 @@ run.rep <- function(refugia=c(1,2),
                 crd$carry.fact[crd$row>=(glac.front)] <- 0
                 crd$carry.fact[crd$col%in%c(1,max(crd$col))] <- crd$carry.fact[crd$col%in%c(1,max(crd$col))]*marginal.decrease
                 l$demography$epochs[[1]]$Carry <- k*crd$carry.fact
-                print(unique(crd[,c("row","carry.fact")]))
+#                print(unique(crd[,c("row","carry.fact")]))
                 l <- landscape.simulate(l,gens.per.epoch)
                 landstate[[g+1]] <- list(gen=l$intparam$currentgen,glac.front=glac.front,sizes=table(landscape.populations(l)))
                 glac.front <- glac.front+glac.retreat.per.epoch

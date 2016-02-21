@@ -42,6 +42,8 @@ treats <- expand.grid(
 
 simrep <- function(jid,treats)
     {
+        print(jid)
+        print(date())
 	print(treats[jid,])
 	res =  NULL
 	x=jid
@@ -67,7 +69,6 @@ simrep <- function(jid,treats)
 				},
                         error=function(err){err},
                 	warning=function(warn){warn})
-print(res)
            list(treats=treats[x,],results=res)
     }
 

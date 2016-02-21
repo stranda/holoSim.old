@@ -30,8 +30,8 @@ recolonizeLandscape <- function(
     refs=c(1),
     sizeref=c(1000),
     shortshape=1,
-    shortscale=1,
-    longmean=10,
+    shortscale=0.3,
+    longmean=2,
     mix = 0,       #ranges 0-1 0=all short, 1=all.long
     dens.scale = 1
     )
