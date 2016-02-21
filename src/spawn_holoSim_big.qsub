@@ -1,0 +1,41 @@
+#
+# Batch PBS Script for Grac simulations
+#
+# Option: -q, which batch queue to run in
+#PBS -q batch
+#
+# Option: -l nodes, how many nodes to run on, note
+# that the ":ppn=2" directive is important. It
+# must always be used.
+#PBS -l nodes=7:ppn=16
+#
+# Option: -l ncpus, how many processors to run on.
+# Smaller requests get processed faster...
+#
+##  #PBS -l pmem=1000mb
+#
+# Option: -l walltime, request this amount of wall
+# clock time for your job.  Format is hh:mm:ss
+# The default is 1 hour.  Be somewhat liberal, but
+# but only request what you think you'll need.
+# Shorter walltime requests are likely to run sooner
+# than longer ones.
+#PBS -l walltime=47:30:00
+#
+#
+# Option: -j oe, combines stdout and stderr into a 
+# single file.
+#PBS -j oe
+#
+#add your parallel code here:
+#
+# How many procs do I have?
+cp $PBS_NODEFILE /home/stranda/projects/cobia/inference/nodefile
+NP=$(wc -l $PBS_NODEFILE | awk '{print $1}')
+echo "I think I have $NP processors available"
+
+cd /home/stranda/projects/holoSim/src; /home/stranda/bin/mpiexec -npernode 8  Rscript --no-save runMPI.R
+exit 0
+
+
+
