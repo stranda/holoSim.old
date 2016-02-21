@@ -25,7 +25,7 @@ recolonizeLandscape <- function(
     cpmut=0.0001,
     nssr = 10,
     ssrmut=0.0001,
-    niam = 10,
+    niam = 1,
     iamut=0.0001,
     refs=c(1),
     sizeref=c(1000),

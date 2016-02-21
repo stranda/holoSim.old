@@ -35,7 +35,7 @@ treats <- expand.grid(
     mix=c(0.5,0.25,0.1,0.05),
     cpmut=10e-6,
     nmut=10e-4,
-    reps=1:2
+    reps=1:1
     )
 
 
@@ -67,7 +67,7 @@ simrep <- function(jid,treats)
 				},
                         error=function(err){err},
                 	warning=function(warn){warn})
-
+print(res)
            list(treats=treats[x,],results=res)
     }
 
