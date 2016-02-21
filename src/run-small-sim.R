@@ -26,7 +26,7 @@ repSamples <- mclapply(1:dim(treats)[1],mc.cores=8,function(x)
                     {
                         refugia=refuge.types[[treats[x,"refuges"]]]
                         rp <- run.rep(refugia=1,
-#                                      k=rep(250,100),
+                                      k=rep(25,100),
                                       refsize=treats[x,"refsize"],
                                       glac.front=treats[x,"glacfront"],
                                       marginal.decrease=treats[x,"marginal.decrease"],
@@ -34,11 +34,12 @@ repSamples <- mclapply(1:dim(treats)[1],mc.cores=8,function(x)
                                       shortscale=treats[x,"shortscale"],
                                       longmean=treats[x,"longmean"],
                                       mix=treats[x,"mix"],
-                                      cpmut=0,
-                                      nmut=0,
-                                      plotland=F,
-                                      nloc=treats[x,"nloc"]
+                                      cpmut=0.00001,
+                                      nmut=0.00001,
+                                      plotland=T,
+                                      nloc=2,
+                                      dumbinit=T
                                       )
                         list(treats=treats[x,],results=rp)
                     })
-save("results/repSamples-",id,".rda",repSamples)
+#save("results/repSamples-",id,".rda",repSamples)
