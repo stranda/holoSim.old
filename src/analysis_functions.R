@@ -36,6 +36,7 @@ par(mfrow=c(2,4))
 	
 	#calculate distances among populations- first get rows, columns (coordinates)
 	crd<-landscape.popcoord(simul_out[[4]])
+	#TO DO- check which populations have individuals and put in NAS for those with pop size of 0
 	#calculate all pairwise geographic distances
 	pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
 	#calculate geographic distance FROM ORIGIN (1,1) for our simulations
