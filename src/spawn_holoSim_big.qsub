@@ -7,7 +7,7 @@
 # Option: -l nodes, how many nodes to run on, note
 # that the ":ppn=2" directive is important. It
 # must always be used.
-#PBS -l nodes=7:ppn=16
+#PBS -l nodes=4:ppn=8
 #
 # Option: -l ncpus, how many processors to run on.
 # Smaller requests get processed faster...

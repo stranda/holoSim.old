@@ -24,17 +24,9 @@ plotlandstate <- function(l,glac.front)
                          )
 }
 
-getRepSample <- function(l,glac.front=20,samp.per.pop=100,plotland=F)
+land2export <- function(sampland)
 {
-    if (plotland)
-    {
-        plotlandstate(l,glac.front)
-    }
-    
-    sampland <- landscape.sample(l,ns=samp.per.pop)
-    
     gi <- landscape.make.genind(sampland) #ignores cpdna
-    
     seqs <- landscape.locus.states(sampland,1) #start to get the cpdna seqs worked out
     seqind <- sapply(sampland$individuals[,7],function(ai){seqs$state[which(seqs$aindex==ai)]})
     aln <- new("multidna")
@@ -42,14 +34,13 @@ getRepSample <- function(l,glac.front=20,samp.per.pop=100,plotland=F)
     aln@labels=as.character(sampland$individuals[,4])
     aln@ind.info=data.frame(sampland$individuals[,c(1,4,5,6)])
     names(aln@ind.info) <- c("state","ID","MatID","PatID")
-                                        #return gi, gi for cp, alignmnent for cp and the sampled landscape
-    if (plotland)
-        simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=NULL,land=sampland,plots=plots)
-    else
-        simres <- list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland)
-                                        #        save(file="current-simrep.rda",simres)
-                                        #        analysis.func(simres,doplots=F)
-        simres
+    list(nucgi=gi,cpgi=multidna2genind(aln,mlst=T),cpaln=aln,land=sampland)
+}
+
+getRepSample <- function(l,glac.front=20,samp.per.pop=100)
+{
+    sampland <- landscape.sample(l,ns=samp.per.pop)
+    list(nucgi=NULL,cpgi=NULL,cpaln=NULL,land=sampland)
 }
 
 

@@ -19,15 +19,15 @@ refuge.types <- list( #treats refugia has an index to this list
 	c(5),             # 2 bottom middle
 	c(1,10),          # 3 both lower corners
         c(2,4,6,7,9),     # 4 half the bottom row
-        c(1,100)          # 5 lower left, upper right
+        c(5,100)          # 5 lower center, upper right
 ) 
 
 treats <- expand.grid(
     dens.scale=0.001,
-    refuges = c(1,3),
+    refuges = c(1,3,4,5),
     refsize = 1000,
-    glacfront = 20,
-    marginal.decrease=1,
+    glacfront = c(20,3),
+    marginal.decrease=c(0.67,1),
     shortshape=1,
     shortscale=c(1,0.5,0.25),
     nloc=100,

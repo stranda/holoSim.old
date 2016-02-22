@@ -19,21 +19,21 @@ distancePDF <- function(x, ssh=1,ssc=1,lmn=100,lsd=100,mix=0)
 recolonizeLandscape <- function(
     h=100,
     s=2,
-    k = rep(1000,h),
+    k = rep(25,h),
     e =  rep(0,h),
     ncp = 1,
-    cpmut=0.0001,
-    nssr = 10,
-    ssrmut=0.0001,
+    cpmut=0.0,
+    nssr = 1,
+    ssrmut=0.0,
     niam = 1,
-    iamut=0.0001,
+    iamut=0.0,
     refs=c(1),
-    sizeref=c(1000),
+    sizeref=c(25),
     shortshape=1,
     shortscale=0.3,
     longmean=2,
     mix = 0,       #ranges 0-1 0=all short, 1=all.long
-    dens.scale = 1
+    dens.scale = 0.05
     )
     
     {
