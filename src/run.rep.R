@@ -168,5 +168,5 @@ run.rep <- function(refugia=c(1,2),
 
 #################
 #################
-	list(sample=getRepSample(l,glac.front=glac.front,plotland=plotland),pophist=landstate)
+	list(sample=getRepSample(l,glac.front=glac.front),pophist=landstate)
 }

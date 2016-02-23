@@ -33,8 +33,8 @@ treats <- expand.grid(
     nloc=100,
     longmean=c(2,3),
     mix=c(0.5,0.25,0.1,0.05),
-    cpmut=10e-6,
-    nmut=10e-4,
+    cpmut=10e-7,
+    nmut=10e-5,
     reps=1:1
     )
 
