@@ -24,7 +24,7 @@ if (doplot)
         par(mfrow=c(2,4))
     }
 	#for now, pull out the microsatellite dataset
-	gen_ind_obj<-simul_out[[1]]
+	gen_ind_obj<-simul_out[[1]]  #probably should use a named object, just in case
 	gi<-gen_ind_obj
 	
 	#number individuals to sample 
@@ -53,16 +53,16 @@ if (doplot)
 	if (doplot==T) plot(sum_stats_gi$pop.n.all,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
 	#linear graph
 	if (doplot==T) plot(sum_stats_gi$pop.n.all,dist_origin,ylab="distance from origin",xlab="number of alleles per population")
-	all_on_dist<-lm(dist_origin~sum_stats_gi$pop.nall)
+	all_on_dist<-lm(dist_origin~sum_stats_gi$pop.n.all)
 	if (doplot==T) abline(all_on_dist)
 	p_val_all<-summary(all_on_dist)[4]$coefficients[8]
 	r_sq_all<-as.numeric(summary(all_on_dist)[8])
 	alleles_data<-c(as.numeric(coef(all_on_dist)),
                         p_val_all,
                         r_sq_all,
-                        var(sum_stats_gi$pop.nall[1:10]),  #these three lines need generalizing
-                        var(sum_stats_gi$pop.nall[50:60]), #if the landscape is different size
-                        var(sum_stats_gi$pop.nall[90:100]))#they will not work
+                        var(sum_stats_gi$pop.n.all[1:10]),  #these three lines need generalizing
+                        var(sum_stats_gi$pop.n.all[50:60]), #if the landscape is different size
+                        var(sum_stats_gi$pop.n.all[90:100]))#they will not work
 	 names(alleles_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
 
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
@@ -126,12 +126,12 @@ if (doplot)
 	names(fst_data)<-c("intercept","slope","pval","rsq")
 	
     if (doplot) dev.off()
-    list("ALLELE STATS" = alleles_data,
-         "HETEROZYGOSITY STATS" = het_data,
-         "FST STATS" = fst_data,
-         "TWO REG MODEL" = two_reg_stats,
-         "FIT DISTRIBUTION WEIBULL" = fit.weibull(glob_fst_by_loc),
-         "FIT DISTRIBUTION GAMMA" = fit.gamma(glob_fst_by_loc)
+    list("ALLELE_STATS" = alleles_data,
+         "HETEROZYGOSITY_STATS" = het_data,
+         "FST_STATS" = fst_data,
+         "TWO_REG_MODEL" = two_reg_stats,
+         "FIT_DISTRIBUTION_WEIBULL" = fit.weibull(glob_fst_by_loc),
+         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc)
          )
 	
 }
