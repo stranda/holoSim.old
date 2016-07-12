@@ -5,15 +5,20 @@
 #load packages
 library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG"); library("PopGenReport")
 
+source("neighb_funcs.R")
 #source("make-landscape.R")
 #source("segment-regression.R")  
 
 #gi
 #load("examp-genind.rda")
-#tmp
-#load("rep.rda")
-#crd
-#load("popcoord.rda")
+
+#tmp is object that contains codominant microsat data in [[1]]
+load("rep.rda")
+gi<-tmp[[1]]
+
+#crd (pop number, row, column)
+crd<-matrix(nrow=100,ncol=3)
+crd[,1]<-1:100;  crd[,2]<-rep(1:10,each=10);  crd[,3]<-rep(1:10,10)
 
 #for now HARD CODE..
 analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=T,...){
@@ -33,15 +38,15 @@ par(mfrow=c(2,4))
 		gi_sub<-lapply(gi_sub, function(x) x[sample(1:nrow(x$tab), num_samp)])
 		gi_sub<-repool(gi_sub)
 	} else gi_sub<-gi
+	gi_sub_gtype<-genind2gtypes(gi_sub)
 	
-	#calculate distances among populations- first get rows, columns (coordinates)
-	crd<-landscape.popcoord(simul_out[[4]])
 	#TO DO- check which populations have individuals and put in NAS for those with pop size of 0
-	#calculate all pairwise geographic distances
+	
+	#calculate all pairwise geographic distances among populations- first get rows, columns (coordinates)
 	pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
 	#calculate geographic distance FROM ORIGIN (1,1) for our simulations
 	dist_origin<-pw_geog_dist[,1]
-	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude sort(rep(1:10,10))
+	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude 
 	rows_pops<-crd[,2] 
 	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
@@ -71,6 +76,18 @@ par(mfrow=c(2,4))
 	 r_sq_het<-as.numeric(summary(het_on_dist)[8])
 	 het_data<-c(as.numeric(coef(het_on_dist)),p_val_het,r_sq_het,mean(het_by_pop[1:10]),mean(het_by_pop[30:40]),mean(het_by_pop[90:100]))
 	 names(het_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+	 
+	 #M RATIO
+	#calc.mratio first does by locus over all pops (the first 10), followed by locus and pop
+	#this means that it does locus 1, all pops, then locus 2, all pops.
+	pop_loc_comb<-as.matrix(expand.grid(pop = 1:num_pops, locus = 1:num_loci))
+	mrat_pop_loc<-cbind(calc.mratio(gi_sub_gtype)[11:1010],pop_loc_comb,rep(dist_origin,10))
+	mrat_pop<-sapply(1:100, function(x) {mean(mrat_pop_loc[mrat_pop_loc[,2]==x,1])})
+	mrat_on_dist<-lm(dist_origin~mrat_pop)
+	p_val_mrat<-summary(mrat_on_dist)[4]$coefficients[8]
+	r_sq_mrat<-as.numeric(summary(mrat_on_dist)[8])
+	mrat_data<-c(as.numeric(coef(mrat_on_dist)),p_val_mrat,r_sq_mrat,mean(mrat_pop[1:10]),mean(mrat_pop[30:40]),mean(mrat_pop[90:100]))
+	names(mrat_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
 	#FAST FST
 	all_pw_FST<-pairwise.fstb(gi_sub)
@@ -107,7 +124,7 @@ par(mfrow=c(2,4))
 	#var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
 	#plot(dist_origin,var_fst_pop)
 	#summary(lm(var_fst_pop~dist_origin)); abline(lm(var_fst_pop~dist_origin))
-	#oddly, variance decreases with distance from origin- oops!
+	#oddly, variance decreases with distance from origin- huh!
 	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
 	if (doplot==T) plot(c(pw_geog_dist),var_pw_fst)
 	var_inc<-lm(var_pw_fst~c(pw_geog_dist))
@@ -116,6 +133,24 @@ par(mfrow=c(2,4))
 	
 	fst_data<-c(as.numeric(coef(all_on_dist)),p_val_fst,r_sq_fst)
 	names(fst_data)<-c("intercept","slope","pval","rsq")
+	
+	#Nearest Neighbor (FST of the populations nearest to you)
+	nn<-near_neighb(all_pw_FST,pw_geog_dist)
+	#plot against distance from origin
+	plot(nn[,3],nn[,2],ylim=c(0,0.15))
+	#plot against population number
+	#plot(nn[,1],nn[,2],ylim=c(0,0.15))
+	#plot against row number
+	#plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15))
+	summary(lm(nn[,2]~nn[,1]))
+	
+	mrat_on_dist<-lm(dist_origin~mrat_pop)
+	p_val_mrat<-summary(mrat_on_dist)[4]$coefficients[8]
+	r_sq_mrat<-as.numeric(summary(mrat_on_dist)[8])
+	mrat_data<-c(as.numeric(coef(mrat_on_dist)),p_val_mrat,r_sq_mrat,mean(mrat_pop[1:10]),mean(mrat_pop[30:40]),mean(mrat_pop[90:100]))
+	names(mrat_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+
+
 	
 	dev.off()
 	list("ALLELE STATS" = alleles_data, "HETEROZYGOSITY STATS" = het_data, "FST STATS" = fst_data, "TWO REG MODEL" = two_reg_stats, "FIT DISTRIBUTION WEIBULL" = fit.weibull(glob_fst_by_loc), "FIT DISTRIBUTION GAMMA" = fit.gamma(glob_fst_by_loc))
