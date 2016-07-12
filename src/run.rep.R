@@ -24,9 +24,15 @@ plotlandstate <- function(l,glac.front)
                          )
 }
 
-land2export <- function(sampland)
+land2export <- function(sampland,ns=24, pvec=NULL, nlocvec=1:10) #ns samples that many individuals from each population
+                                                              #pvec is a vector of the population numbers to sample
+                                                              #nlocvec corresponds to the loci to sample
+                                                              #sampland is a rmetasim landscape
+                                                             
 {
+    sampland <- landscape.sample(sampland,ns=ns,pvec=pvec)
     gi <- landscape.make.genind(sampland) #ignores cpdna
+    gi <- gi[,loc=nlocvec] #subsample loci
     seqs <- landscape.locus.states(sampland,1) #start to get the cpdna seqs worked out
     seqind <- sapply(sampland$individuals[,7],function(ai){seqs$state[which(seqs$aindex==ai)]})
     aln <- new("multidna")
@@ -168,5 +174,5 @@ run.rep <- function(refugia=c(1,2),
 
 #################
 #################
-	list(sample=getRepSample(l,glac.front=glac.front,plotland=plotland),pophist=landstate)
+	list(sample=getRepSample(l,glac.front=glac.front),pophist=landstate)
 }

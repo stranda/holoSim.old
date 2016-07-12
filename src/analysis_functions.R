@@ -21,13 +21,15 @@ crd<-matrix(nrow=100,ncol=3)
 crd[,1]<-1:100;  crd[,2]<-rep(1:10,each=10);  crd[,3]<-rep(1:10,10)
 
 #for now HARD CODE..
-analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=T,...){
+analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...){
  
-pdf(file="graphics.pdf",width=11,height=5)
-par(mfrow=c(2,4))
-
+if (doplot)
+    {
+        pdf(file="graphics.pdf",width=11,height=5)
+        par(mfrow=c(2,4))
+    }
 	#for now, pull out the microsatellite dataset
-	gen_ind_obj<-simul_out[[1]]
+	gen_ind_obj<-simul_out[[1]]  #probably should use a named object, just in case
 	gi<-gen_ind_obj
 	
 	#number individuals to sample 
@@ -45,6 +47,7 @@ par(mfrow=c(2,4))
 	#calculate all pairwise geographic distances among populations- first get rows, columns (coordinates)
 	pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
 	#calculate geographic distance FROM ORIGIN (1,1) for our simulations
+        #this will need to be generalized for different refugia locations
 	dist_origin<-pw_geog_dist[,1]
 	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude 
 	rows_pops<-crd[,2] 
@@ -59,7 +62,12 @@ par(mfrow=c(2,4))
 	if (doplot==T) abline(all_on_dist)
 	p_val_all<-summary(all_on_dist)[4]$coefficients[8]
 	r_sq_all<-as.numeric(summary(all_on_dist)[8])
-	alleles_data<-c(as.numeric(coef(all_on_dist)),p_val_all,r_sq_all,var(sum_stats_gi$pop.n.all[1:10]),var(sum_stats_gi$pop.n.all[50:60]),var(sum_stats_gi$pop.n.all[90:100]))
+	alleles_data<-c(as.numeric(coef(all_on_dist)),
+                        p_val_all,
+                        r_sq_all,
+                        var(sum_stats_gi$pop.n.all[1:10]),  #these three lines need generalizing
+                        var(sum_stats_gi$pop.n.all[50:60]), #if the landscape is different size
+                        var(sum_stats_gi$pop.n.all[90:100]))#they will not work
 	 names(alleles_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
 
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
@@ -127,7 +135,7 @@ par(mfrow=c(2,4))
 	#oddly, variance decreases with distance from origin- huh!
 	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
 	if (doplot==T) plot(c(pw_geog_dist),var_pw_fst)
-	var_inc<-lm(var_pw_fst~c(pw_geog_dist))
+#	var_inc<-lm(var_pw_fst~c(pw_geog_dist)) #this takes a long time and is not used later
 	#p_val_fst_var<-summary(var_inc)[4]$coefficients[8]
 	#r_sq_fst_var<-as.numeric(summary(var_inc)[8])
 	
@@ -150,9 +158,13 @@ par(mfrow=c(2,4))
 	mrat_data<-c(as.numeric(coef(mrat_on_dist)),p_val_mrat,r_sq_mrat,mean(mrat_pop[1:10]),mean(mrat_pop[30:40]),mean(mrat_pop[90:100]))
 	names(mrat_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
-
-	
-	dev.off()
-	list("ALLELE STATS" = alleles_data, "HETEROZYGOSITY STATS" = het_data, "FST STATS" = fst_data, "TWO REG MODEL" = two_reg_stats, "FIT DISTRIBUTION WEIBULL" = fit.weibull(glob_fst_by_loc), "FIT DISTRIBUTION GAMMA" = fit.gamma(glob_fst_by_loc))
+    if (doplot) dev.off()
+    list("ALLELE_STATS" = alleles_data,
+         "HETEROZYGOSITY_STATS" = het_data,
+         "FST_STATS" = fst_data,
+         "TWO_REG_MODEL" = two_reg_stats,
+         "FIT_DISTRIBUTION_WEIBULL" = fit.weibull(glob_fst_by_loc),
+         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc)
+         )
 	
 }
