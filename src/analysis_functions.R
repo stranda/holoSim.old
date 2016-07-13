@@ -63,67 +63,42 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
 		all_by_pop<-summary(gi_sub)$pop.n.all
-		
-		#'x' graph then linear graph
-		if (doplot==T) plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
-		if (doplot==T) { plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(all_on_dist) }
-		
-		#new summary
 		alleles_data<-c(lm_summary(dist_origin,all_by_pop), mean_var_rows(all_by_pop))
 		names(alleles_data)<-names_stats
 
 	
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
-		 temp<-lapply(seppop(gi_sub),summary)
-		 het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
-		 #lapply(temp, function(x) var(x$Hexp))
-		 
-		 #'x' graph then linear graph
-		 if (doplot==T) plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
-		 if (doplot==T) { plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population");  abline(het_on_dist) }
-		 
-		#new summary
+		temp<-lapply(seppop(gi_sub),summary)
+		het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
 		het_data<-c(lm_summary(dist_origin,het_by_pop), mean_var_rows(het_by_pop))
 		names(het_data)<-names_stats
 	 
 	 
 	#M RATIO, at each locus from strataG
 		mrat_by_pop<-colMeans(mRatio(gi_sub_gtype))
-		#new summary
 		mrat_data<-c(lm_summary(dist_origin,mrat_by_pop), mean_var_rows(het_by_pop))
 		names(het_data)<-names_stats
 	
-
 	#FAST FST
-	all_pw_FST<-pairwise.fstb(gi_sub)
-	fst_per_pop_gi<-colMeans(all_pw_FST)
-	diag(all_pw_FST)<-NA
-	if (doplot==T) plot(fst_per_pop_gi,rows_pops)
-	#color code populations by row!
-	#note these are NOT isolation by distance, this is per population FST and distance from origin
-	fst_on_dist<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
-	#TO DO SUMMARIZE LINEAR MODEL?? Do I want this or the IBD one below?
-	if (doplot==T) plot((log(dist_origin)),log(fst_per_pop_gi),pch='')
-	pop.num<-1:100
-	if (doplot==T) text((log(dist_origin)),log(fst_per_pop_gi),labels=as.character(pop.num))
-	#abline(fst_on_dist)
-	#resid(fst_on_dist)
+	#note these are NOT isolation by distance (which is below), this is per population FST and distance from origin
+		all_pw_FST<-pairwise.fstb(gi_sub)
+		fst_by_pop<-colMeans(all_pw_FST)
+		diag(all_pw_FST)<-NA
+		fst_data<-c(lm_summary(dist_origin,fst_by_pop), mean_var_rows(fst_by_pop))
+		names(fst_by_pop)<-names_stats
 	
 	#isolation by distance (IBD)	
-	diag(pw_geog_dist)<-NA
-	IBD<-lm(c(all_pw_FST)~c(log(pw_geog_dist+0.001)))
-	p_val_fst<-summary(IBD)[4]$coefficients[8]
-	r_sq_fst<-as.numeric(summary(IBD)[8])
-	if (doplot==T) plot(pw_geog_dist, all_pw_FST)
-	
+		diag(pw_geog_dist)<-NA
+		IBD_data<-lm_summary(c(pw_geog_dist), c(all_pw_FST))
+			
 	#broken stick
-	two_reg_stats<-segmentGLM(c(pw_geog_dist),log(c(all_pw_FST)))
+		two_reg_stats<-segmentGLM(c(pw_geog_dist),log(c(all_pw_FST)))
 	
 	#global FST fitting distribution
 	gi_sub_pegas<-genind2loci(gi_sub)
 	glob_fst_by_loc<-Fst(gi_sub_pegas)[,2]
 	
-	#Variance in FST
+	#Variance in FST across loci- does it tell us much?
 	all_pw_by_loc<-lapply(seploc(gi_sub), function(x) pairwise.fstb(x))
 	concat_pw<-do.call(cbind,lapply(all_pw_by_loc, c))
 	var_pw_fst<-apply(concat_pw,1,var)
@@ -154,6 +129,24 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	nn_data<-c(as.numeric(coef(nn_on_dist)),p_val_nn,r_sq_nn,mean(nn[1:36,2]),mean(nn[109:144,2]),mean(nn[325:360])) #there should be 360 nearest neighbors??
 	names(nn_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
+		#'x' graph then linear graph
+		if (doplot==T) {
+			plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
+			plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(lm(dist_origin~all_by_pop)) 
+			plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
+			plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population");  abline(lm(dist_origin~het_by_pop)) 
+			plot(fst_by_pop,rows_pops)
+			plot(dist_origin,fst_by_pop,pch='');  abline(lm(dist_origin~fst_by_pop))	#plot distance from origin
+			pop.num<-1:100;  text(dist_origin,fst_by_pop,labels=as.character(pop.num))
+			
+			fst_on_dist<-lm_summary(dist_origin,fst_by_pop)	#removed the log here- not needed?
+			resid(fst_on_dist)	#anything we can do with the residuals?
+		
+			plot(pw_geog_dist, all_pw_FST)	#plot IBD
+					
+		}
+		
+		
     if (doplot) dev.off()
     list("ALLELE_STATS" = alleles_data,
          "HETEROZYGOSITY_STATS" = het_data,
