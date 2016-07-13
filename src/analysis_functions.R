@@ -3,36 +3,50 @@
 #all markers have same mutation rate and starting allele freq
 
 #load packages
-library("ade4"); library("apex"); library("adegenet"); library("hierfstat");library("pegas"); library("strataG"); library("PopGenReport")
+library("ade4"); library("adegenet"); library("hierfstat"); library("pegas"); 	#all needed??
+library("strataG"); 	#strataG for mratio and... ??
+library("PopGenReport")	#this is the one with fast FST
 
-source("neighb_funcs.R")
+setwd("C:/Users/shoban/Documents/GitHub/holoSim/src")
+
+source("neighbor_funcs.R")
+source("segment-regression.R")  
 #source("make-landscape.R")
-#source("segment-regression.R")  
-
-#gi
-#load("examp-genind.rda")
 
 #tmp is object that contains codominant microsat data in [[1]]
-load("rep.rda")
+load("../rep.rda")
 gi<-tmp[[1]]
 
-#crd (pop number, row, column)
+#population coordinates crd (pop number, row, column) assumes 100 populations
 crd<-matrix(nrow=100,ncol=3)
 crd[,1]<-1:100;  crd[,2]<-rep(1:10,each=10);  crd[,3]<-rep(1:10,10)
 
-#for now HARD CODE..
+#ROWS TO FOCUS ON to calculate mean and variance for a statistic, for populations in that row, e.g. bottom row, middle, top row
+rows_of_focus<-list(1:10,51:60,91:100)
+
+#calculate all PAIRWISE GEOGRAPHIC DISTANCES among populations- first get rows, columns (coordinates)
+pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
+
+#calculate geographic DISTANCE FROM ORIGIN (1,1) for our simulations
+#this ASSUMES ORIGIN AT 1,1
+dist_origin<-pw_geog_dist[,1]
+
+#row each population belongs to- row 1 lowest latitude, row 10 highest latitude 
+rows_pops<-crd[,2] 
+
+#names for list of general statistics to calculate
+names_stats<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat","var_low_lat","var_mid_lat","var_high_lat")
+
+#for now HARD CODE.. 
 analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...){
  
-if (doplot)
-    {
-        pdf(file="graphics.pdf",width=11,height=5)
-        par(mfrow=c(2,4))
-    }
+	if (doplot)   { pdf(file="graphics.pdf",width=11,height=5;  par(mfrow=c(2,4)) }
+
 	#for now, pull out the microsatellite dataset
 	gen_ind_obj<-simul_out[[1]]  #probably should use a named object, just in case
 	gi<-gen_ind_obj
 	
-	#number individuals to sample 
+	#NUMBER INDIVIDUALS TO SAMPLE 
 	if (!exists("n_smp")) num_samp<-24
 	#subset to num_samp individuals
 	if (subsample==T) {
@@ -44,58 +58,41 @@ if (doplot)
 	
 	#TO DO- check which populations have individuals and put in NAS for those with pop size of 0
 	
-	#calculate all pairwise geographic distances among populations- first get rows, columns (coordinates)
-	pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
-	#calculate geographic distance FROM ORIGIN (1,1) for our simulations
-        #this will need to be generalized for different refugia locations
-	dist_origin<-pw_geog_dist[,1]
-	#row each population belongs to- row 1 lowest latitude, row 10 highest latitude 
-	rows_pops<-crd[,2] 
+	
+	###########  CALCULATING STATISTICS  #############
 	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
-	sum_stats_gi<-summary(gi_sub)
-	#'x' graph
-	if (doplot==T) plot(sum_stats_gi$pop.n.all,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
-	#linear graph
-	if (doplot==T) plot(sum_stats_gi$pop.n.all,dist_origin,ylab="distance from origin",xlab="number of alleles per population")
-	all_on_dist<-lm(dist_origin~sum_stats_gi$pop.n.all)
-	if (doplot==T) abline(all_on_dist)
-	p_val_all<-summary(all_on_dist)[4]$coefficients[8]
-	r_sq_all<-as.numeric(summary(all_on_dist)[8])
-	alleles_data<-c(as.numeric(coef(all_on_dist)),
-                        p_val_all,
-                        r_sq_all,
-                        var(sum_stats_gi$pop.n.all[1:10]),  #these three lines need generalizing
-                        var(sum_stats_gi$pop.n.all[50:60]), #if the landscape is different size
-                        var(sum_stats_gi$pop.n.all[90:100]))#they will not work
-	 names(alleles_data)<-c("intercept","slope","pval","rsq","var_low_lat","var_mid_lat","var_high_lat")
+		all_by_pop<-summary(gi_sub)$pop.n.all
+		
+		#'x' graph then linear graph
+		if (doplot==T) plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
+		if (doplot==T) { plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(all_on_dist) }
+		
+		#new summary
+		alleles_data<-c(lm_summary(dist_origin,all_by_pop), mean_var_rows(all_by_pop))
+		names(alleles_data)<-names_stats
 
+	
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
-	 temp<-lapply(seppop(gi_sub),summary)
-	 het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
-	 #lapply(temp, function(x) var(x$Hexp))
-	 #'x' graph
-	 if (doplot==T) plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
-	 #linear graph
-	 if (doplot==T) plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population")
-	 het_on_dist<-lm(dist_origin~het_by_pop)
-	 if (doplot==T) abline(het_on_dist)
-	 p_val_het<-summary(het_on_dist)[4]$coefficients[8]
-	 r_sq_het<-as.numeric(summary(het_on_dist)[8])
-	 het_data<-c(as.numeric(coef(het_on_dist)),p_val_het,r_sq_het,mean(het_by_pop[1:10]),mean(het_by_pop[30:40]),mean(het_by_pop[90:100]))
-	 names(het_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+		 temp<-lapply(seppop(gi_sub),summary)
+		 het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
+		 #lapply(temp, function(x) var(x$Hexp))
+		 
+		 #'x' graph then linear graph
+		 if (doplot==T) plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
+		 if (doplot==T) { plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population");  abline(het_on_dist) }
+		 
+		#new summary
+		het_data<-c(lm_summary(dist_origin,het_by_pop), mean_var_rows(het_by_pop))
+		names(het_data)<-names_stats
 	 
-	 #M RATIO
-	#calc.mratio first does by locus over all pops (the first 10), followed by locus and pop
-	#this means that it does locus 1, all pops, then locus 2, all pops.
-	pop_loc_comb<-as.matrix(expand.grid(pop = 1:num_pops, locus = 1:num_loci))
-	mrat_pop_loc<-cbind(calc.mratio(gi_sub_gtype)[11:1010],pop_loc_comb,rep(dist_origin,10))
-	mrat_pop<-sapply(1:100, function(x) {mean(mrat_pop_loc[mrat_pop_loc[,2]==x,1])})
-	mrat_on_dist<-lm(dist_origin~mrat_pop)
-	p_val_mrat<-summary(mrat_on_dist)[4]$coefficients[8]
-	r_sq_mrat<-as.numeric(summary(mrat_on_dist)[8])
-	mrat_data<-c(as.numeric(coef(mrat_on_dist)),p_val_mrat,r_sq_mrat,mean(mrat_pop[1:10]),mean(mrat_pop[30:40]),mean(mrat_pop[90:100]))
-	names(mrat_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+	 
+	#M RATIO, at each locus from strataG
+		mrat_by_pop<-colMeans(mRatio(gi_sub_gtype))
+		#new summary
+		mrat_data<-c(lm_summary(dist_origin,mrat_by_pop), mean_var_rows(het_by_pop))
+		names(het_data)<-names_stats
+	
 
 	#FAST FST
 	all_pw_FST<-pairwise.fstb(gi_sub)
@@ -105,6 +102,7 @@ if (doplot)
 	#color code populations by row!
 	#note these are NOT isolation by distance, this is per population FST and distance from origin
 	fst_on_dist<-lm(log(fst_per_pop_gi)~log(dist_origin+0.001))
+	#TO DO SUMMARIZE LINEAR MODEL?? Do I want this or the IBD one below?
 	if (doplot==T) plot((log(dist_origin)),log(fst_per_pop_gi),pch='')
 	pop.num<-1:100
 	if (doplot==T) text((log(dist_origin)),log(fst_per_pop_gi),labels=as.character(pop.num))
@@ -132,7 +130,7 @@ if (doplot)
 	#var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
 	#plot(dist_origin,var_fst_pop)
 	#summary(lm(var_fst_pop~dist_origin)); abline(lm(var_fst_pop~dist_origin))
-	#oddly, variance decreases with distance from origin- huh!
+	#oddly, variance decreases with distance from origin- huh!!!
 	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
 	if (doplot==T) plot(c(pw_geog_dist),var_pw_fst)
 #	var_inc<-lm(var_pw_fst~c(pw_geog_dist)) #this takes a long time and is not used later
@@ -150,13 +148,11 @@ if (doplot)
 	#plot(nn[,1],nn[,2],ylim=c(0,0.15))
 	#plot against row number
 	#plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15))
-	summary(lm(nn[,2]~nn[,1]))
-	
-	mrat_on_dist<-lm(dist_origin~mrat_pop)
-	p_val_mrat<-summary(mrat_on_dist)[4]$coefficients[8]
-	r_sq_mrat<-as.numeric(summary(mrat_on_dist)[8])
-	mrat_data<-c(as.numeric(coef(mrat_on_dist)),p_val_mrat,r_sq_mrat,mean(mrat_pop[1:10]),mean(mrat_pop[30:40]),mean(mrat_pop[90:100]))
-	names(mrat_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+	nn_on_dist<-lm(dist_origin~nn[,2])
+	p_val_nn<-summary(nn_on_dist)[4]$coefficients[8]
+	r_sq_nn<-as.numeric(summary(nn_on_dist)[8])
+	nn_data<-c(as.numeric(coef(nn_on_dist)),p_val_nn,r_sq_nn,mean(nn[1:36,2]),mean(nn[109:144,2]),mean(nn[325:360])) #there should be 360 nearest neighbors??
+	names(nn_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
     if (doplot) dev.off()
     list("ALLELE_STATS" = alleles_data,
@@ -167,4 +163,27 @@ if (doplot)
          "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc)
          )
 	
+}
+
+#Generalized function to extract stats from summaries of the linear models
+lm_summary<-function(dist_vector,stat_vector){
+	stat_on_dist<-lm(dist_vector~stat_vector)
+	#summarize linear model
+	coeffic<-(as.numeric(coef(stat_on_dist)))
+	p_val<-summary(stat_on_dist)[4]$coefficients[8]
+	r_sq<-as.numeric(summary(stat_on_dist)[8])
+	c(coeffic, p_val, r_sq)
+}
+
+#Generalized function to extract means/ variances from top, middle, bottom rows
+mean_var_rows<-function(stats_vector){
+	c(
+	mean(stats_vector[1:10]),  # var and mean by rows... these three lines need generalizing
+    mean(stats_vector[50:60]), #if the landscape is different size
+    mean(stats_vector[90:100]), #they will not work
+	var(stats_vector[1:10]),  
+    var(stats_vector[50:60]), 
+    var(stats_vector[90:100])
+	)
+
 }
