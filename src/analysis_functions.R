@@ -91,42 +91,21 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 		diag(pw_geog_dist)<-NA
 		IBD_data<-lm_summary(c(pw_geog_dist), c(all_pw_FST))
 			
-	#broken stick
+	#broken stick model
 		two_reg_stats<-segmentGLM(c(pw_geog_dist),log(c(all_pw_FST)))
 	
-	#global FST fitting distribution
+	#global FST fitting distribution- QUESTION- what are we fitting here??
 	gi_sub_pegas<-genind2loci(gi_sub)
 	glob_fst_by_loc<-Fst(gi_sub_pegas)[,2]
 	
-	#Variance in FST across loci- does it tell us much?
-	all_pw_by_loc<-lapply(seploc(gi_sub), function(x) pairwise.fstb(x))
-	concat_pw<-do.call(cbind,lapply(all_pw_by_loc, c))
-	var_pw_fst<-apply(concat_pw,1,var)
-	#var_fst_pop<-as.vector(as.numeric(lapply(FSTpop, function(x) sd(x[,2]))))
-	#plot(dist_origin,var_fst_pop)
-	#summary(lm(var_fst_pop~dist_origin)); abline(lm(var_fst_pop~dist_origin))
-	#oddly, variance decreases with distance from origin- huh!!!
-	#mean(var_fst_pop[1:10]),mean(var_fst_pop[40:50]), mean(var_fst_pop[90:100])
-	if (doplot==T) plot(c(pw_geog_dist),var_pw_fst)
-#	var_inc<-lm(var_pw_fst~c(pw_geog_dist)) #this takes a long time and is not used later
-	#p_val_fst_var<-summary(var_inc)[4]$coefficients[8]
-	#r_sq_fst_var<-as.numeric(summary(var_inc)[8])
-	
-	fst_data<-c(as.numeric(coef(all_on_dist)),p_val_fst,r_sq_fst)
-	names(fst_data)<-c("intercept","slope","pval","rsq")
 	
 	#Nearest Neighbor (FST of the populations nearest to you)
+	#nn[,1] is focal population number, nn[,2] is the FST to one of its neighbors, [,3] is distance of focal population to the origin
 	nn<-near_neighb(all_pw_FST,pw_geog_dist)
-	#plot against distance from origin
-	plot(nn[,3],nn[,2],ylim=c(0,0.15))
-	#plot against population number
-	#plot(nn[,1],nn[,2],ylim=c(0,0.15))
-	#plot against row number
-	#plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15))
-	nn_on_dist<-lm(dist_origin~nn[,2])
-	p_val_nn<-summary(nn_on_dist)[4]$coefficients[8]
-	r_sq_nn<-as.numeric(summary(nn_on_dist)[8])
-	nn_data<-c(as.numeric(coef(nn_on_dist)),p_val_nn,r_sq_nn,mean(nn[1:36,2]),mean(nn[109:144,2]),mean(nn[325:360])) #there should be 360 nearest neighbors??
+	
+	#WORKING HERE
+	
+	fst_data<-c(lm_summary(nn[,3],nn[,2]),mean(nn[1:36,2]),mean(nn[109:144,2]),mean(nn[325:360])) #there should be 360 nearest neighbors??
 	names(nn_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
 
 		#'x' graph then linear graph
@@ -143,7 +122,11 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 			resid(fst_on_dist)	#anything we can do with the residuals?
 		
 			plot(pw_geog_dist, all_pw_FST)	#plot IBD
-					
+			
+			plot(nn[,3],nn[,2],ylim=c(0,0.15),ylab="distance from origin",xlab="FST of nearest neighbors"))	#nearest neighbor #plot against distance from origin
+			plot(nn[,1],nn[,2],ylim=c(0,0.15),ylab="population number",xlab="FST of nearest neighbors")	#plot against population number
+			plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15),ylab="row number",xlab="FST of nearest neighbors")	#plot against row number
+			boxplot(nn[,2]~rep(1:10,each=36))
 		}
 		
 		
@@ -170,6 +153,9 @@ lm_summary<-function(dist_vector,stat_vector){
 
 #Generalized function to extract means/ variances from top, middle, bottom rows
 mean_var_rows<-function(stats_vector){
+
+#TO DO especially considering nn, I'd like to have this take rows of focus and apply to them
+
 	c(
 	mean(stats_vector[1:10]),  # var and mean by rows... these three lines need generalizing
     mean(stats_vector[50:60]), #if the landscape is different size
