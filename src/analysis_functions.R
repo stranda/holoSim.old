@@ -10,15 +10,14 @@ library("PopGenReport")	#this is the one with fast FST
 setwd("C:/Users/shoban/Documents/GitHub/holoSim/src")
 setwd("C:/Users/seanmh/Documents/git/holoSim/src/")
 
-source("neighbor_funcs.R")
-source("segment-regression.R")  
+source("neighbor_funcs.R");  source("segment-regression.R");  source("gen_sum_stat_funcs.R")
 #source("make-landscape.R")
 
 #tmp is object that contains codominant microsat data in [[1]]
 load("../rep.rda")
 gi<-tmp[[1]]
 
-#population coordinates crd (pop number, row, column) assumes 100 populations
+#POPULATION COORDINATES crd (pop number, row, column) assumes 100 populations
 crd<-matrix(nrow=100,ncol=3)
 crd[,1]<-1:100;  crd[,2]<-rep(1:10,each=10);  crd[,3]<-rep(1:10,10)
 
@@ -34,11 +33,7 @@ pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
 #this ASSUMES ORIGIN AT 1,1
 dist_origin<-pw_geog_dist[,1]
 
-#row each population belongs to
-#row 1 lowest latitude, row 10 highest latitude 
-rows_pops<-crd[,2] 
-
-#names for list of general statistics to calculate
+#NAMES for list of general statistics to calculate
 names_stats<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat","var_low_lat","var_mid_lat","var_high_lat")
 
 #for now HARD CODE.. 
@@ -47,8 +42,6 @@ subsample=F
 num_loci=10
 doplot=F
  
-	if (doplot)   { pdf(file="graphics.pdf",width=11,height=5;  par(mfrow=c(2,4)) }
-
 	#pull out the microsatellite dataset
 	gen_ind_obj<-gi[[1]]  #use a named object, just in case
 	gi<-gen_ind_obj
@@ -107,7 +100,29 @@ doplot=F
 		temp_rows_of_focus<-list(1:36,109:144,325:360)	#there should be 360 nearest neighbors
 		nn_data<-get_sum_stats(nn[,2], nn[,3], temp_rows_of_focus)
 
+		list("ALLELE_STATS" = alleles_data,
+         "HETEROZYGOSITY_STATS" = het_data,
+		 "MRATIO_STATS" = mrat_data,
+         "FST_STATS" = fst_data,
+		 "IBD_STATS" = ibd_data,
+         "TWO_REG_MODEL" = two_reg_stats,
+         "FIT_DISTRIBUTION_WEIBULL" = fit.weibull(glob_fst_by_loc),
+         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc),
+		 "NEAR_NEIGHB_STATS" = nn_data,
+         )
+		 
+	
+	
+	###########  PLOTTING STATS  #############
+	
+	if (doplot)   { pdf(file="graphics.pdf",width=11,height=5;  par(mfrow=c(2,4)) }
+	
+	#row each population belongs to
+	#row 1 lowest latitude, row 10 highest latitude 
+	rows_pops<-crd[,2] 
+	
 	#'x' graph then linear graph
+	
 	if (doplot==T) {
 		plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
 		plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(lm(dist_origin~all_by_pop)) 
@@ -129,41 +144,3 @@ doplot=F
 	}
 	if (doplot) dev.off()
     
-	list("ALLELE_STATS" = alleles_data,
-         "HETEROZYGOSITY_STATS" = het_data,
-		 "MRATIO_STATS" = mrat_data,
-         "FST_STATS" = fst_data,
-		 "IBD_STATS" = ibd_data,
-         "TWO_REG_MODEL" = two_reg_stats,
-         "FIT_DISTRIBUTION_WEIBULL" = fit.weibull(glob_fst_by_loc),
-         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc),
-		 "NEAR_NEIGHB_STATS" = nn_data,
-         )
-
-
-#Generalized function to extract stats from summaries of the linear models
-lm_summary<-function(dist_vector,stat_vector){
-	stat_on_dist<-lm(dist_vector~stat_vector)
-	#summarize linear model
-	coeffic<-(as.numeric(coef(stat_on_dist)))
-	p_val<-summary(stat_on_dist)[4]$coefficients[8]
-	r_sq<-as.numeric(summary(stat_on_dist)[8])
-	c(coeffic, p_val, r_sq)
-}
-
-#Generalized function to extract MEANS/ VARIANCES from top, middle, bottom ROWS
-#this take rows of focus and applies mean, var to them
-#should be ok for different size landscapes and as many rows as you want to look at
-mean_var_rows<-function(stats_vector, rows_focus){
-	c(
-	sapply(rows_of_focus, function (x) mean(all_by_pop[x])),
-	sapply(rows_of_focus, function (x) var(all_by_pop[x]))
-	)
-}
-
-#General function to get summary stats glued together and name the vector
-get_sum_stats<-function(stat_vector, dist_vector, rows_list){
-	stats_data<-c(lm_summary(dist_vector,stat_vector), mean_var_rows(stat_vector, rows_list))
-	names(stats_data)<-names_stats
-	stats_data
-}
