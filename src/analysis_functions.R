@@ -42,12 +42,15 @@ rows_pops<-crd[,2]
 names_stats<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat","var_low_lat","var_mid_lat","var_high_lat")
 
 #for now HARD CODE.. 
-analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...){
+n_smp=24
+subsample=F
+num_loci=10
+doplot=F
  
 	if (doplot)   { pdf(file="graphics.pdf",width=11,height=5;  par(mfrow=c(2,4)) }
 
-	#for now, pull out the microsatellite dataset
-	gen_ind_obj<-simul_out[[1]]  #use a named object, just in case
+	#pull out the microsatellite dataset
+	gen_ind_obj<-gi[[1]]  #use a named object, just in case
 	gi<-gen_ind_obj
 	
 	#NUMBER INDIVIDUALS TO SAMPLE 
@@ -67,29 +70,24 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
 		all_by_pop<-summary(gi_sub)$pop.n.all
-		alleles_data<-c(lm_summary(dist_origin,all_by_pop), mean_var_rows(all_by_pop, rows_of_focus))
-		names(alleles_data)<-names_stats
-
+		alleles_data<-get_sum_stats(all_by_pop, dist_origin, rows_focus)
 	
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
 		temp<-lapply(seppop(gi_sub),summary)
 		het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
-		het_data<-c(lm_summary(dist_origin,het_by_pop), mean_var_rows(het_by_pop, rows_of_focus))
-		names(het_data)<-names_stats
+		het_data<-get_sum_stats(het_by_pop, dist_origin, rows_focus)
 	 
 	 
 	#M RATIO, at each locus from strataG
 		mrat_by_pop<-colMeans(mRatio(gi_sub_gtype))
-		mrat_data<-c(lm_summary(dist_origin,mrat_by_pop), mean_var_rows(het_by_pop, rows_of_focus))
-		names(het_data)<-names_stats
+		mrat_data<-get_sum_stats(mrat_by_pop, dist_origin, rows_focus)
 	
 	#FAST FST
 	#note these are NOT isolation by distance (which is below), this is per population FST and distance from origin
 		all_pw_FST<-pairwise.fstb(gi_sub)
 		fst_by_pop<-colMeans(all_pw_FST)
 		diag(all_pw_FST)<-NA
-		fst_data<-c(lm_summary(dist_origin,fst_by_pop), mean_var_rows(fst_by_pop, rows_of_focus))
-		names(fst_by_pop)<-names_stats
+		fst_data<-get_sum_stats(fst_by_pop, dist_origin, rows_focus)
 	
 	#isolation by distance (IBD)	
 		diag(pw_geog_dist)<-NA
@@ -107,8 +105,7 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	#nn[,1] is focal population number, nn[,2] is the FST to one of its neighbors, [,3] is distance of focal population to the origin
 		nn<-near_neighb(all_pw_FST,pw_geog_dist)
 		temp_rows_of_focus<-list(1:36,109:144,325:360)	#there should be 360 nearest neighbors
-		fst_data<-c(lm_summary(nn[,3],nn[,2]), mean_var_rows(nn[,2], temp_rows_of_focus))
-		names(nn_data)<-names_stats
+		nn_data<-get_sum_stats(nn[,2], nn[,3], temp_rows_of_focus)
 
 	#'x' graph then linear graph
 	if (doplot==T) {
@@ -130,18 +127,19 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 		plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15),ylab="row number",xlab="FST of nearest neighbors")	#plot against row number
 		boxplot(nn[,2]~rep(1:10,each=36))
 	}
-		
-		
-    if (doplot) dev.off()
-    list("ALLELE_STATS" = alleles_data,
+	if (doplot) dev.off()
+    
+	list("ALLELE_STATS" = alleles_data,
          "HETEROZYGOSITY_STATS" = het_data,
+		 "MRATIO_STATS" = mrat_data,
          "FST_STATS" = fst_data,
+		 "IBD_STATS" = ibd_data,
          "TWO_REG_MODEL" = two_reg_stats,
          "FIT_DISTRIBUTION_WEIBULL" = fit.weibull(glob_fst_by_loc),
-         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc)
+         "FIT_DISTRIBUTION_GAMMA" = fit.gamma(glob_fst_by_loc),
+		 "NEAR_NEIGHB_STATS" = nn_data,
          )
-	
-}
+
 
 #Generalized function to extract stats from summaries of the linear models
 lm_summary<-function(dist_vector,stat_vector){
@@ -161,4 +159,11 @@ mean_var_rows<-function(stats_vector, rows_focus){
 	sapply(rows_of_focus, function (x) mean(all_by_pop[x])),
 	sapply(rows_of_focus, function (x) var(all_by_pop[x]))
 	)
+}
+
+#General function to get summary stats glued together and name the vector
+get_sum_stats<-function(stat_vector, dist_vector, rows_list){
+	stats_data<-c(lm_summary(dist_vector,stat_vector), mean_var_rows(stat_vector, rows_list))
+	names(stats_data)<-names_stats
+	stats_data
 }
