@@ -8,6 +8,7 @@ library("strataG"); 	#strataG for mratio and... ??
 library("PopGenReport")	#this is the one with fast FST
 
 setwd("C:/Users/shoban/Documents/GitHub/holoSim/src")
+setwd("C:/Users/seanmh/Documents/git/holoSim/src/")
 
 source("neighbor_funcs.R")
 source("segment-regression.R")  
@@ -21,17 +22,20 @@ gi<-tmp[[1]]
 crd<-matrix(nrow=100,ncol=3)
 crd[,1]<-1:100;  crd[,2]<-rep(1:10,each=10);  crd[,3]<-rep(1:10,10)
 
-#ROWS TO FOCUS ON to calculate mean and variance for a statistic, for populations in that row, e.g. bottom row, middle, top row
+#ROWS TO FOCUS ON to calculate mean and variance for a statistic, 
+#for populations in that row, e.g. bottom row, middle, top row
 rows_of_focus<-list(1:10,51:60,91:100)
 
-#calculate all PAIRWISE GEOGRAPHIC DISTANCES among populations- first get rows, columns (coordinates)
+#calculate all PAIRWISE GEOGRAPHIC DISTANCES among populations, 
+#taking rows, columns from crd(coordinates)
 pw_geog_dist<-as.matrix(dist(crd[,2:3],upper=T,diag=T))
 
-#calculate geographic DISTANCE FROM ORIGIN (1,1) for our simulations
+#calculate geographic DISTANCE FROM ORIGIN 
 #this ASSUMES ORIGIN AT 1,1
 dist_origin<-pw_geog_dist[,1]
 
-#row each population belongs to- row 1 lowest latitude, row 10 highest latitude 
+#row each population belongs to
+#row 1 lowest latitude, row 10 highest latitude 
 rows_pops<-crd[,2] 
 
 #names for list of general statistics to calculate
@@ -43,7 +47,7 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	if (doplot)   { pdf(file="graphics.pdf",width=11,height=5;  par(mfrow=c(2,4)) }
 
 	#for now, pull out the microsatellite dataset
-	gen_ind_obj<-simul_out[[1]]  #probably should use a named object, just in case
+	gen_ind_obj<-simul_out[[1]]  #use a named object, just in case
 	gi<-gen_ind_obj
 	
 	#NUMBER INDIVIDUALS TO SAMPLE 
@@ -63,20 +67,20 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	
 	#NUMBER OF ALLELES, across loci, by pop, using adegenet
 		all_by_pop<-summary(gi_sub)$pop.n.all
-		alleles_data<-c(lm_summary(dist_origin,all_by_pop), mean_var_rows(all_by_pop))
+		alleles_data<-c(lm_summary(dist_origin,all_by_pop), mean_var_rows(all_by_pop, rows_of_focus))
 		names(alleles_data)<-names_stats
 
 	
 	#HETEROZYG EXPECTED, across loci, by pop using adegenet..
 		temp<-lapply(seppop(gi_sub),summary)
 		het_by_pop<-as.vector(as.numeric(lapply(temp, function(x) mean(x$Hexp))))
-		het_data<-c(lm_summary(dist_origin,het_by_pop), mean_var_rows(het_by_pop))
+		het_data<-c(lm_summary(dist_origin,het_by_pop), mean_var_rows(het_by_pop, rows_of_focus))
 		names(het_data)<-names_stats
 	 
 	 
 	#M RATIO, at each locus from strataG
 		mrat_by_pop<-colMeans(mRatio(gi_sub_gtype))
-		mrat_data<-c(lm_summary(dist_origin,mrat_by_pop), mean_var_rows(het_by_pop))
+		mrat_data<-c(lm_summary(dist_origin,mrat_by_pop), mean_var_rows(het_by_pop, rows_of_focus))
 		names(het_data)<-names_stats
 	
 	#FAST FST
@@ -84,7 +88,7 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 		all_pw_FST<-pairwise.fstb(gi_sub)
 		fst_by_pop<-colMeans(all_pw_FST)
 		diag(all_pw_FST)<-NA
-		fst_data<-c(lm_summary(dist_origin,fst_by_pop), mean_var_rows(fst_by_pop))
+		fst_data<-c(lm_summary(dist_origin,fst_by_pop), mean_var_rows(fst_by_pop, rows_of_focus))
 		names(fst_by_pop)<-names_stats
 	
 	#isolation by distance (IBD)	
@@ -101,33 +105,31 @@ analysis.func = function(simul_out,n_smp=24,subsample=F,num_loci=10,doplot=F,...
 	
 	#Nearest Neighbor (FST of the populations nearest to you)
 	#nn[,1] is focal population number, nn[,2] is the FST to one of its neighbors, [,3] is distance of focal population to the origin
-	nn<-near_neighb(all_pw_FST,pw_geog_dist)
-	
-	#WORKING HERE
-	
-	fst_data<-c(lm_summary(nn[,3],nn[,2]),mean(nn[1:36,2]),mean(nn[109:144,2]),mean(nn[325:360])) #there should be 360 nearest neighbors??
-	names(nn_data)<-c("intercept","slope","pval","rsq","mean_low_lat","mean_mid_lat","mean_high_lat")
+		nn<-near_neighb(all_pw_FST,pw_geog_dist)
+		temp_rows_of_focus<-list(1:36,109:144,325:360)	#there should be 360 nearest neighbors
+		fst_data<-c(lm_summary(nn[,3],nn[,2]), mean_var_rows(nn[,2], temp_rows_of_focus))
+		names(nn_data)<-names_stats
 
-		#'x' graph then linear graph
-		if (doplot==T) {
-			plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
-			plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(lm(dist_origin~all_by_pop)) 
-			plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
-			plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population");  abline(lm(dist_origin~het_by_pop)) 
-			plot(fst_by_pop,rows_pops)
-			plot(dist_origin,fst_by_pop,pch='');  abline(lm(dist_origin~fst_by_pop))	#plot distance from origin
-			pop.num<-1:100;  text(dist_origin,fst_by_pop,labels=as.character(pop.num))
-			
-			fst_on_dist<-lm_summary(dist_origin,fst_by_pop)	#removed the log here- not needed?
-			resid(fst_on_dist)	#anything we can do with the residuals?
+	#'x' graph then linear graph
+	if (doplot==T) {
+		plot(all_by_pop,rows_pops,ylab="row of landscape",xlab="number of alleles per population")
+		plot(all_by_pop,dist_origin,ylab="distance from origin",xlab="number of alleles per population");  abline(lm(dist_origin~all_by_pop)) 
+		plot(het_by_pop,rows_pops,ylab="row of landscape",xlab="heterozygosity per population")
+		plot(het_by_pop,dist_origin,ylab="distance from origin",xlab="heterozygosity per population");  abline(lm(dist_origin~het_by_pop)) 
+		plot(fst_by_pop,rows_pops)
+		plot(dist_origin,fst_by_pop,pch='');  abline(lm(dist_origin~fst_by_pop))	#plot distance from origin
+		pop.num<-1:100;  text(dist_origin,fst_by_pop,labels=as.character(pop.num))
 		
-			plot(pw_geog_dist, all_pw_FST)	#plot IBD
-			
-			plot(nn[,3],nn[,2],ylim=c(0,0.15),ylab="distance from origin",xlab="FST of nearest neighbors"))	#nearest neighbor #plot against distance from origin
-			plot(nn[,1],nn[,2],ylim=c(0,0.15),ylab="population number",xlab="FST of nearest neighbors")	#plot against population number
-			plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15),ylab="row number",xlab="FST of nearest neighbors")	#plot against row number
-			boxplot(nn[,2]~rep(1:10,each=36))
-		}
+		fst_on_dist<-lm_summary(dist_origin,fst_by_pop)	#removed the log here- not needed?
+		resid(fst_on_dist)	#anything we can do with the residuals?
+	
+		plot(pw_geog_dist, all_pw_FST)	#plot IBD
+		
+		plot(nn[,3],nn[,2],ylim=c(0,0.15),ylab="distance from origin",xlab="FST of nearest neighbors"))	#nearest neighbor #plot against distance from origin
+		plot(nn[,1],nn[,2],ylim=c(0,0.15),ylab="population number",xlab="FST of nearest neighbors")	#plot against population number
+		plot(rep(1:10,each=36),nn[,2],ylim=c(0,0.15),ylab="row number",xlab="FST of nearest neighbors")	#plot against row number
+		boxplot(nn[,2]~rep(1:10,each=36))
+	}
 		
 		
     if (doplot) dev.off()
@@ -151,18 +153,12 @@ lm_summary<-function(dist_vector,stat_vector){
 	c(coeffic, p_val, r_sq)
 }
 
-#Generalized function to extract means/ variances from top, middle, bottom rows
-mean_var_rows<-function(stats_vector){
-
-#TO DO especially considering nn, I'd like to have this take rows of focus and apply to them
-
+#Generalized function to extract MEANS/ VARIANCES from top, middle, bottom ROWS
+#this take rows of focus and applies mean, var to them
+#should be ok for different size landscapes and as many rows as you want to look at
+mean_var_rows<-function(stats_vector, rows_focus){
 	c(
-	mean(stats_vector[1:10]),  # var and mean by rows... these three lines need generalizing
-    mean(stats_vector[50:60]), #if the landscape is different size
-    mean(stats_vector[90:100]), #they will not work
-	var(stats_vector[1:10]),  
-    var(stats_vector[50:60]), 
-    var(stats_vector[90:100])
+	sapply(rows_of_focus, function (x) mean(all_by_pop[x])),
+	sapply(rows_of_focus, function (x) var(all_by_pop[x]))
 	)
-
 }
