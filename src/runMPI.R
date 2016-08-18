@@ -24,15 +24,15 @@ refuge.types <- list( #treats refugia has an index to this list
 
 treats <- expand.grid(
     dens.scale=0.001,
-    refuges = c(1,3),
-    refsize = 1000,
-    glacfront = c(20,3),
-    marginal.decrease=c(0.67,1),
+    refuges = c(2,3,4,5),
+    refsize = c(1000),
+    glacfront = c(20),
+    marginal.decrease=c(1),
     shortshape=1,
     shortscale=c(1,0.5,0.25),
     nloc=100,
     longmean=c(1.5,2,2.5,3),
-    mix=c(0.2,0.15,0.1,0.05,0.01,0),
+    mix=c(0.15,0.1,0.05,0.01,0),
     cpmut=10e-7,
     nmut=10e-5,
     reps=1
