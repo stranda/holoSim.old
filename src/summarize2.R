@@ -40,7 +40,7 @@ mrgs <- unique(dat$marginal.decrease)
 frnt <- max(frnt) #only take a large value for glacfront. Means the glaciers never came south; habitat always good
 mrgs <- max(mrgs) #highest marginal.decrease (named backwards) will be equal to 1 and means no increase or decrease
 #refs <- refs[refs!=3] #bottom left only and bottom and embedded
-mixes <- mixes[mixes<0.2]
+mixes <- mixes[mixes<=0.1]
 sscl <- sscl[sscl==0.5]
 
 ###now subset the data to only include the ranges identified above
@@ -67,6 +67,17 @@ if (dim(tdf)[1]>0)
     p <- p + labs(y="Summary statistic value",x="Proportion of dispersal events considered Long-Distance")
                                         #p <- p+labs(title=paste0("Statistic: ",stat))
     png("highlight-effects.png",width=800,height=1050)
+    print(p)
+    dev.off()
+
+    png("summary-stat-placeholder.png",width=500,height=300)
+    p = tdf %>% filter(statistic%in%c("ALLELE_STATS.slope","FIT_DISTRIBUTION_WEIBULL.scale"))%>% ggplot(aes(x=mix,y=value))
+     p <- p+geom_boxplot(aes(group=mix))
+    p <- p + stat_summary(fun.y=median,geom="line",aes(group=1))
+    p <- p + facet_wrap(~statistic,ncol=3,scales="free_y")
+    p <- p + labs(y="Summary statistic value",x="Proportion of dispersal events considered Long-Distance")
+                                        #p <- p+labs(title=paste0("Statistic: ",stat))
+    
     print(p)
     dev.off()
     

@@ -1,0 +1,55 @@
+---
+title: "Approaches to 'pre-simulate' prior to genetic simulations"
+output: pdf_document
+---
+
+While thinking about how to speed up our simulations, I inevitably returned to the basic approach that splatche is supposed to take.  I asked myself how hard it would be to do the "pre-simulation" in forward time and then use that output to parameterize a fastsimcoal model.
+
+ Basically, I set up a refugium (or multiples) and run the simulation with a particular dispersal kernel among populations.  Each colonization event is recorded (both the source and sink as well as the time that it occurred).  The colonization process works pretty much like you'd expect, very few populations colonized at first, but as some get colonized and can serve as sources, there is a burst of colonization followed by a tail that occurs when a few single uncolonized sites hang on for a while.
+
+To speed this traditional demographic approach up, I run it with small population sizes.  It runs acceptablly fast for 100 populations, but takes around 20 sec for 196 populations and much slower for bigger numbers.  Dispersal characteristics can change this dramatically, of course.
+
+Here is an example with 225 populations:  The arrows correspond to colonization events.  I consider colonization to have occurred when a single individual reaches a site.  The redder colors are early colonizations, the yellow ones are later (the lighter the yellow the later).  The refugium is in the lower left corner.
+
+#Parameters:
+
+   * dens.scale: 0-1 scaling factor applied to the migration matrix, M, (this is a tuning parameter: small values speed up simulation, but may reduce realism)
+   * h: number of habitats (should be square in extent, so sqrt(h) should be a whole number)
+   * refs: a vector of refugia.  The population ids start in the lower left and progress right and then start again on the second row on the left.  So if h is 100 (10x10 arrangement of populations) refs = c(1,10) would correspond to the lower left and lower right corners
+   * sizeref: initial size of refuge.
+   * mix: proportion of LDD events
+   * longmean: the mean (and sd) of the long distance dispersal events
+   * shortscale: the scale parameter of a Weibull with shape set to 1 (in this case the scale of a neg exponential)
+
+```{r}
+library(rmetasim)
+source("make-landscape.R")
+source("plothist.R")
+source("getpophist.R")
+
+l <- recolonizeLandscape(dens.scale=0.05,
+                           h=225,
+                           refs=c(1),
+                           sizeref=c(25),
+                           mix=0.01,
+                           longmean=3,
+                           shortscale=0.35
+                           )
+system.time({pops1 <- getpophist(l)})
+plothist(pops1)
+
+l2 <- recolonizeLandscape(dens.scale=0.05,
+                           h=225,
+                           refs=c(1),
+                           sizeref=c(25),
+                           mix=0.1,
+                           longmean=3,
+                           shortscale=0.35
+                           )
+system.time({pops2 <- getpophist(l2)})
+plothist(pops2)
+
+```
+
+
+

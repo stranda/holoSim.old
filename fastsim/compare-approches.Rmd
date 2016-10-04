@@ -7,7 +7,7 @@ While thinking about how to speed up our simulations, I inevitably returned to t
 
 I tried two separate approaches.  The first is more demographically realistic and runs in rmetasim.  Basically, I set up a refugium (or multiples) and run the simulation with a particular dispersal kernel among populations.  Each colonization event is recorded (both the source and sink as well as the time that it occurred).  The colonization process works pretty much like you'd expect, very few populations colonized at first, but as some get colonized and can serve as sources, there is a burst of colonization followed by a tail that occurs when a few single uncolonized sites hang on for a while.
 
-To speed this traditional demographic approach up, I run it with small population sizes.  It runs acceptable fast for 100 populations, but takes around 20 sec for 196 populations and much slower for bigger numbers.  Dispersal characteristics can change this dramatically, of course.
+To speed this traditional demographic approach up, I run it with small population sizes.  It runs acceptablly fast for 100 populations, but takes around 20 sec for 196 populations and much slower for bigger numbers.  Dispersal characteristics can change this dramatically, of course.
 
 Here is an example with 225 populations:  The arrows correspond to colonization events.  I consider colonization to have occurred when a single individual reaches a site.  The redder colors are early colonizations, the yellow ones are later (the lighter the yellow the later).  The refugium is in the lower left corner.
 ```{r}
