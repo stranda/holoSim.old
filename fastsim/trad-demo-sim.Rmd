@@ -1,6 +1,6 @@
 ---
 title: "Approaches to 'pre-simulate' prior to genetic simulations"
-output: pdf_document
+output: html_document
 ---
 
 While thinking about how to speed up our simulations, I inevitably returned to the basic approach that splatche is supposed to take.  I asked myself how hard it would be to do the "pre-simulation" in forward time and then use that output to parameterize a fastsimcoal model.
