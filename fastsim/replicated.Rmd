@@ -1,0 +1,153 @@
+---
+title: "One approach to get replicated results from forward-time sims"
+output: html_document
+---
+
+This is just a quick example of how to replicate simulations many times.
+
+First I'm creating a 'run_rep()' function that takes the input parameters (see 'trad-demo-sim.Rmd`) and returns a single simulation result.  
+
+Then I use mcapply() to run this on multiple cores.  This only works with linux and mac (I think). Windows will need the more elaborate parLapply() approach.
+
+```{r}
+run_rep <- function(dens.scale=0.05,
+                    h=225,
+                    refs=c(1),
+                    sizeref=c(25),
+                    mix=0.01,
+                    longmean=3,
+                    shortscale=0.35)
+{
+
+  l <- recolonizeLandscape(dens.scale=dens.scale,
+                             h=h,
+                             refs=refs,
+                             sizeref=sizeref,
+                             mix=mix,
+                             longmean=longmean,
+                             shortscale=shortscale
+                             )
+  getpophist(l)
+}
+```
+
+
+Load up some essentials
+```{r}
+library(rmetasim)
+library(parallel)
+source("make-landscape.R")
+source("plothist.R")
+source("getpophist.R")
+
+set.seed(123463)
+
+```
+
+
+run the simulation.  I'm just going to run 4 reps of the same (default) parameters:
+
+```{r, cache=T}
+#change cache to F in the chunk header to rerun sims every time you knit
+treats = expand.grid(rep=1:4,
+                     dens.scale=0.05,
+                    h=225,
+                    refs=c(1),
+                    sizeref=c(25),
+                    mix=c(0.01),
+                    longmean=3,
+                    shortscale=0.35)
+
+reps <- mclapply(1:dim(treats)[1],mc.cores=4,function(x)
+  {
+    
+    with(treats,run_rep(dens.scale=dens.scale[x],
+                             h=h[x],
+                             refs=refs[x],
+                             sizeref=sizeref[x],
+                             mix=mix[x],
+                             longmean=longmean[x],
+                             shortscale=shortscale[x]))
+  })
+
+```
+
+Here are summary plots for each rep
+
+```{r}
+
+sapply(reps,function(x){plothist(x)})
+
+```
+
+
+
+This one does two reps of one mixture and two of another
+```{r,cache=T}
+
+treats = expand.grid(rep=1:2,
+                     dens.scale=0.05,
+                    h=225,
+                    refs=c(1),
+                    sizeref=c(25),
+                    mix=c(0.01,0.001),
+                    longmean=3,
+                    shortscale=0.35)
+
+reps <- mclapply(1:dim(treats)[1],mc.cores=4,function(x)
+  {
+    
+    with(treats,run_rep(dens.scale=dens.scale[x],
+                             h=h[x],
+                             refs=refs[x],
+                             sizeref=sizeref[x],
+                             mix=mix[x],
+                             longmean=longmean[x],
+                             shortscale=shortscale[x]))
+  })
+
+```
+
+
+
+```{r}
+
+sapply(reps,function(x){plothist(x)})
+
+```
+
+
+
+Finally, one with two different refuges, 2 reps each
+```{r,cache=T}
+
+treats = expand.grid(rep=1:2,
+                     dens.scale=0.05,
+                    h=225,
+                    refs=c(1,14),
+                    sizeref=c(25),
+                    mix=c(0.01),
+                    longmean=3,
+                    shortscale=0.35)
+
+reps <- mclapply(1:dim(treats)[1],mc.cores=4,function(x)
+  {
+    
+    with(treats,run_rep(dens.scale=dens.scale[x],
+                             h=h[x],
+                             refs=refs[x],
+                             sizeref=sizeref[x],
+                             mix=mix[x],
+                             longmean=longmean[x],
+                             shortscale=shortscale[x]))
+  })
+
+```
+
+
+
+```{r}
+
+sapply(reps,function(x){plothist(x)})
+
+```
