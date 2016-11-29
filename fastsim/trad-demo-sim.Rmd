@@ -21,7 +21,7 @@ Here is an example with 225 populations:  The arrows correspond to colonization 
    * longmean: the mean (and sd) of the long distance dispersal events
    * shortscale: the scale parameter of a Weibull with shape set to 1 (in this case the scale of a neg exponential)
 
-```{r}
+```{r, cache=T}
 library(rmetasim)
 source("make-landscape.R")
 source("plothist.R")
@@ -47,6 +47,9 @@ l2 <- recolonizeLandscape(dens.scale=0.05,
                            shortscale=0.35
                            )
 system.time({pops2 <- getpophist(l2)})
+```
+
+```{r}
 plothist(pops2)
 
 ```
