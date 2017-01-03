@@ -1,0 +1,58 @@
+---
+title: "Pre-simulation with non-square landscapes"
+output: html_document
+---
+
+The expectation of a square landscape is a bit limiting.  This rmd shows how to create landscapes of any x and y dimensions
+
+#Parameters:
+
+   * dens.scale: 0-1 scaling factor applied to the migration matrix, M, (this is a tuning parameter: small values speed up simulation, but may reduce realism)
+   * h: number of habitats (if xdim and ydim are not specified this number must have a whole square root)
+   * xdim: number of pops in the x dimension (multiplied with ydim should equal h)
+   * ydim: number of pops in the y dimension
+   * refs: a vector of refugia.  The population ids start in the lower left and progress right and then start again on the second row on the left.  So if h is 100 (10x10 arrangement of populations) refs = c(1,10) would correspond to the lower left and lower right corners
+   * sizeref: initial size of refuge.
+   * mix: proportion of LDD events
+   * longmean: the mean (and sd) of the long distance dispersal events
+   * shortscale: the scale parameter of a Weibull with shape set to 1 (in this case the scale of a neg exponential)
+
+
+###Note that in the figures, points are spread out for plotting convenience. internally they are on a grid with equal spacing
+```{r, cache=T}
+
+library(rmetasim)
+source("make-landscape.R")
+source("plothist.R")
+source("getpophist.R")
+
+l <- recolonizeLandscape(dens.scale=0.05,
+                           h=200,
+                           xdim=10,
+                           ydim=20,
+                           refs=c(1),
+                           sizeref=c(25),
+                           mix=0.01,
+                           longmean=3,
+                           shortscale=0.35
+                           )
+system.time({pops1 <- getpophist(l)})
+plothist(pops1)
+
+l2 <- recolonizeLandscape(dens.scale=0.05,
+                           h=60,
+                           xdim=30,
+                           ydim=2,
+                           refs=c(1),
+                           sizeref=c(25),
+                           mix=0.1,
+                           longmean=3,
+                           shortscale=0.35
+                           )
+system.time({pops2 <- getpophist(l2)})
+plothist(pops2)
+```
+
+
+
+

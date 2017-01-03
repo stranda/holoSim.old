@@ -1,8 +1,7 @@
 getpophist <- function(l,maxtime=500)
 {
-
-if (FALSE)
-{
+  if (FALSE)
+  {
     l <- recolonizeLandscape(dens.scale=0.05,
                              h=225,
                              refs=c(15,7,1),
@@ -11,7 +10,7 @@ if (FALSE)
                              longmean=3,
                              shortscale=0.35
                              )
-}
+  }
     pops <- landscape.popcoord(l)
     pops$arrive <- NA
     pops$source <- NA
